@@ -1,34 +1,21 @@
-# =============================================================================
-# Paperclip – Docker Compose (Production)
-# Mode: authenticated + public (internet-facing, login required)
-# Agent: OpenCode (opencode_local adapter)
-# =============================================================================
-# Sao chép .env.example → .env rồi điền các giá trị, sau đó chạy:
-#   docker compose up -d
-# =============================================================================
-
 services:
-  # ── Paperclip app ─────────────────────────────────────────────────────────
   paperclip:
     image: ghcr.io/paperclipai/paperclip:latest
     container_name: paperclip
+    restart: always
     user: root
-    restart: unless-stopped
     environment:
+      # General
       HOST: 0.0.0.0
-      PORT: ${PAPERCLIP_PORT:-3100}
-      NODE_ENV: production
-
-      # Deployment mode
-      PAPERCLIP_DEPLOYMENT_MODE: ${PAPERCLIP_DEPLOYMENT_MODE:-authenticated}
+      PORT: 3100
       PAPERCLIP_PUBLIC_URL: ${PAPERCLIP_PUBLIC_URL}
 
-      # Data storage (inside container – mapped via volume)
+      # Data storage (Standard path for Paperclip)
       HOME: /paperclip
       PAPERCLIP_HOME: /paperclip
       PAPERCLIP_INSTANCE_ID: ${PAPERCLIP_INSTANCE_ID:-default}
       
-      # Kích hoạt OpenCode Agent và ép đường dẫn PATH
+      # Agent Configuration (OpenCode)
       PAPERCLIP_AGENT_OPENCODE_ENABLED: "true"
       PAPERCLIP_AGENT_OPENCODE_BINARY: /usr/local/bin/opencode
       PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/app/cli/bin
@@ -39,49 +26,34 @@ services:
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       PAPERCLIP_AGENT_JWT_SECRET: ${PAPERCLIP_AGENT_JWT_SECRET:-${BETTER_AUTH_SECRET}}
 
-      # Telemetry
-      PAPERCLIP_TELEMETRY_DISABLED: ${PAPERCLIP_TELEMETRY_DISABLED:-1}
-
       # LLM API Keys
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       GOOGLE_GENERATIVE_AI_API_KEY: ${GOOGLE_GENERATIVE_AI_API_KEY:-}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+
+      # Telemetry
+      PAPERCLIP_TELEMETRY_DISABLED: 1
     volumes:
       - ./data:/paperclip
     expose:
-      - "${PAPERCLIP_PORT:-3100}"
+      - "3100"
     networks:
       - paperclip_net
 
-  # ── Nginx reverse proxy ────────────────────────────────────────────────────
   nginx:
     image: nginx:1.27-alpine
     container_name: paperclip_nginx
-    restart: unless-stopped
+    restart: always
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
       - ./nginx/certbot/www:/var/www/certbot:ro
       - ./nginx/certbot/conf:/etc/letsencrypt:ro
-    networks:
-      - paperclip_net
     depends_on:
       - paperclip
-
-  # ── Certbot (Let's Encrypt) ────────────────────────────────────────────────
-  # Chạy một lần để lấy cert, sau đó tự renew qua cron hoặc deploy timer.
-  # Nếu dùng IP (không có domain), comment block này lại.
-  certbot:
-    image: certbot/certbot:latest
-    container_name: paperclip_certbot
-    volumes:
-      - ./nginx/certbot/www:/var/www/certbot
-      - ./nginx/certbot/conf:/etc/letsencrypt
-    entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done"
     networks:
       - paperclip_net
 
