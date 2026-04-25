@@ -11,8 +11,10 @@ Bộ cài đặt Docker thay thế cách deploy bằng `systemd` truyền thốn
 ├── .env.example                          # Template biến môi trường
 └── nginx/
     └── conf.d/
-        ├── paperclip.conf.template       # Template Nginx HTTPS
-        └── paperclip-http.conf.template  # Template Nginx HTTP (IP)
+        ├── paperclip.conf.template       # Template Nginx HTTPS (Paperclip)
+        ├── paperclip-http.conf.template  # Template Nginx HTTP (Paperclip)
+        ├── n8n.conf.template             # Template Nginx HTTPS (n8n)
+        └── n8n-http.conf.template        # Template Nginx HTTP (n8n)
 ```
 
 ## Cách sử dụng
@@ -26,9 +28,9 @@ bash setup-docker.sh
 Wizard sẽ hỏi các thông số và tự:
 - Cài Docker nếu chưa có
 - Sinh `PAPERCLIP_SECRETS_MASTER_KEY`
-- Tạo `.env` và Nginx config
-- Khởi động `docker compose`
-- Xin SSL certificate (Let's Encrypt) nếu chọn
+- Tạo `.env` và Nginx config cho cả Paperclip và n8n
+- Khởi động `docker compose` (Paperclip, n8n, Nginx)
+- Xin SSL certificate (Let's Encrypt) nếu chọn cho cả 2 domain
 
 ### Option C – Tự động hoàn toàn (CI/CD / Automation)
 
@@ -70,16 +72,15 @@ docker compose up -d
 | `docker compose down` | Dừng và xóa containers |
 | `docker compose logs -f paperclip` | Xem log realtime |
 | `docker compose restart paperclip` | Restart Paperclip |
-| `docker compose pull && docker compose up -d` | Update lên phiên bản mới |
+| `docker compose logs -f n8n` | Xem log n8n |
+| `docker compose pull && docker compose up -d` | Update toàn bộ hệ thống |
 | `docker compose exec paperclip opencode auth login` | Đăng nhập OpenCode trong container |
 
 ## Data Persistence
 
-Data được lưu trong Docker volume `paperclip_data` (persistent, không mất khi restart):
-- Embedded PostgreSQL
-- Uploaded assets
-- Secrets key
-- Agent workspace
+Data được lưu trong các thư mục local:
+- `./data`: Dữ liệu của Paperclip (DB, assets, agent workspace)
+- `./n8n_data`: Dữ liệu và workflows của n8n
 
 Backup volume:
 ```bash
