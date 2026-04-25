@@ -38,10 +38,26 @@ echo ""
 
 # Domain
 while true; do
-    read -rp "$(echo -e "${CYAN}Domain công khai${NC} (VD: paperclip.example.com): ")" DOMAIN
+    read -rp "$(echo -e "${CYAN}Domain hoặc IP${NC} (VD: paperclip.example.com hoặc 52.188.18.250): ")" DOMAIN
+    [[ -n "$DOMAIN" ]] || { warn "Không được để trống."; continue; }
+
+    # Tự strip http:// https:// và trailing slash
+    DOMAIN="${DOMAIN#http://}"
+    DOMAIN="${DOMAIN#https://}"
+    DOMAIN="${DOMAIN%/}"
+
     [[ -n "$DOMAIN" ]] && break
-    warn "Domain không được để trống."
 done
+
+# Kiểm tra có phải IP không (Certbot không hỗ trợ IP)
+IS_IP=false
+if [[ "$DOMAIN" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    IS_IP=true
+    warn "Phát hiện địa chỉ IP: $DOMAIN"
+    warn "Let's Encrypt không cấp SSL cho IP. INSTALL_CERTBOT sẽ tự tắt."
+    warn "Nếu muốn HTTPS, trỏ domain về IP này rồi chạy lại script."
+fi
+
 
 # Port
 read -rp "$(echo -e "${CYAN}Port${NC} [mặc định: 3100]: ")" PORT
@@ -66,7 +82,10 @@ INSTALL_NGINX="true"
 [[ "${_NGINX,,}" == "n" ]] && INSTALL_NGINX="false"
 
 # Certbot
-if [[ "$INSTALL_NGINX" == "true" ]]; then
+if [[ "$IS_IP" == "true" ]]; then
+    # IP address → không thể dùng Let's Encrypt
+    INSTALL_CERTBOT="false"
+elif [[ "$INSTALL_NGINX" == "true" ]]; then
     read -rp "$(echo -e "${CYAN}Cài Let's Encrypt SSL tự động?${NC} [Y/n]: ")" _CERT
     INSTALL_CERTBOT="true"
     [[ "${_CERT,,}" == "n" ]] && INSTALL_CERTBOT="false"
@@ -256,14 +275,33 @@ sudo systemctl enable paperclip
 if [[ "$INSTALL_NGINX" == "true" ]]; then
     info "Cài và cấu hình Nginx..."
     sudo apt-get install -y nginx
+    sudo ln -sf /etc/nginx/sites-available/paperclip /etc/nginx/sites-enabled/paperclip
+    sudo rm -f /etc/nginx/sites-enabled/default
+fi
 
-    sudo tee /etc/nginx/sites-available/paperclip > /dev/null << NGINXEOF
+# ─────────────────────────────────────────────────────────────
+# 12. Let's Encrypt SSL + Nginx config
+# ─────────────────────────────────────────────────────────────
+if [[ "$INSTALL_CERTBOT" == "true" ]]; then
+    info "Cài Let's Encrypt SSL cho ${DOMAIN}..."
+    sudo apt-get install -y certbot python3-certbot-nginx
+
+    # Lấy cert trước khi viết Nginx HTTPS config
+    sudo systemctl stop nginx 2>/dev/null || true
+    sudo certbot certonly \
+        --standalone \
+        --non-interactive \
+        --agree-tos \
+        --email "$ADMIN_EMAIL" \
+        -d "$DOMAIN"
+
+    # Cert đã có → viết HTTPS config
+    sudo tee /etc/nginx/sites-available/paperclip > /dev/null << NGINXHTTPS
 upstream paperclip_backend {
     server 127.0.0.1:${PORT};
     keepalive 32;
 }
 
-# Redirect HTTP → HTTPS
 server {
     listen 80;
     listen [::]:80;
@@ -276,29 +314,24 @@ server {
     listen [::]:443 ssl http2;
     server_name ${DOMAIN};
 
-    # SSL – Certbot sẽ điền tự động
     ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
     include             /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
-    # Security headers
     add_header X-Frame-Options DENY;
     add_header X-Content-Type-Options nosniff;
     add_header X-XSS-Protection "1; mode=block";
     add_header Referrer-Policy "strict-origin-when-cross-origin";
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
-    # WebSocket support (Paperclip dùng live updates)
     proxy_http_version 1.1;
     proxy_set_header Upgrade \$http_upgrade;
     proxy_set_header Connection "upgrade";
-
     proxy_set_header Host \$host;
     proxy_set_header X-Real-IP \$remote_addr;
     proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto \$scheme;
-
     proxy_read_timeout 300s;
     proxy_connect_timeout 10s;
     client_max_body_size 100M;
@@ -307,29 +340,8 @@ server {
         proxy_pass http://paperclip_backend;
     }
 }
-NGINXEOF
+NGINXHTTPS
 
-    sudo ln -sf /etc/nginx/sites-available/paperclip /etc/nginx/sites-enabled/paperclip
-    sudo rm -f /etc/nginx/sites-enabled/default
-fi
-
-# ─────────────────────────────────────────────────────────────
-# 12. Let's Encrypt SSL
-# ─────────────────────────────────────────────────────────────
-if [[ "$INSTALL_CERTBOT" == "true" ]]; then
-    info "Cài Let's Encrypt SSL cho ${DOMAIN}..."
-    sudo apt-get install -y certbot python3-certbot-nginx
-
-    # Dùng standalone để lấy cert trước (Nginx config trỏ đến cert nên chưa test được)
-    sudo systemctl stop nginx 2>/dev/null || true
-    sudo certbot certonly \
-        --standalone \
-        --non-interactive \
-        --agree-tos \
-        --email "$ADMIN_EMAIL" \
-        -d "$DOMAIN"
-
-    # Sau khi có cert mới test và start Nginx
     sudo nginx -t
     sudo systemctl start nginx
     sudo systemctl enable nginx
@@ -339,8 +351,8 @@ if [[ "$INSTALL_CERTBOT" == "true" ]]; then
         sort -u | crontab -
 
 elif [[ "$INSTALL_NGINX" == "true" ]]; then
-    # Nginx có nhưng không có cert → tạm bỏ HTTPS block, chỉ dùng HTTP
-    warn "Không cài SSL. Nginx chỉ chạy HTTP (port 80) tạm thời."
+    # Không có cert (IP hoặc người dùng chọn không) → HTTP only
+    warn "Không cài SSL. Nginx chỉ chạy HTTP (port 80)."
     sudo tee /etc/nginx/sites-available/paperclip > /dev/null << NGINXHTTP
 upstream paperclip_backend {
     server 127.0.0.1:${PORT};
