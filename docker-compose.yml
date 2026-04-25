@@ -59,6 +59,7 @@ services:
       - N8N_PROTOCOL=${PROTO}
       - NODE_ENV=production
       - WEBHOOK_URL=${PROTO}://${DOMAIN}:5678/
+      - N8N_SECURE_COOKIE=false
       - GENERIC_TIMEZONE=Asia/Ho_Chi_Minh
     volumes:
       - ./n8n_data:/home/node/.n8n
