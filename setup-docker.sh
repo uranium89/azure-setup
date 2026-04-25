@@ -289,12 +289,17 @@ info ".env đã được ghi."
 # 5. Khởi tạo thư mục Data và quyền truy cập
 # ─────────────────────────────────────────────────────────────
 info "Khởi tạo thư mục data và cấp quyền..."
-mkdir -p "$SCRIPT_DIR/data"
+mkdir -p "$SCRIPT_DIR/data/instances/production/db"
 mkdir -p "$SCRIPT_DIR/nginx/certbot/www"
 mkdir -p "$SCRIPT_DIR/nginx/certbot/conf"
-# Cấp quyền ghi cho mọi user để container chắc chắn ghi được
-sudo chmod -R 777 "$SCRIPT_DIR/data"
+
+# Cấp quyền ghi cho thư mục cha
+sudo chmod 777 "$SCRIPT_DIR/data"
 sudo chmod -R 777 "$SCRIPT_DIR/nginx/certbot"
+
+# ĐẶC BIỆT: PostgreSQL yêu cầu thư mục db phải là 700
+info "Thiết lập quyền 700 cho thư mục database..."
+sudo chmod 700 "$SCRIPT_DIR/data/instances/production/db"
 
 # ─────────────────────────────────────────────────────────────
 # 6. Tạo Nginx config
