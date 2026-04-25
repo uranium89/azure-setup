@@ -32,6 +32,8 @@ services:
       # Secrets
       PAPERCLIP_SECRETS_MASTER_KEY: ${PAPERCLIP_SECRETS_MASTER_KEY}
       PAPERCLIP_SECRETS_STRICT_MODE: ${PAPERCLIP_SECRETS_STRICT_MODE:-true}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      PAPERCLIP_AGENT_JWT_SECRET: ${PAPERCLIP_AGENT_JWT_SECRET:-${BETTER_AUTH_SECRET}}
 
       # Telemetry
       PAPERCLIP_TELEMETRY_DISABLED: ${PAPERCLIP_TELEMETRY_DISABLED:-1}
@@ -45,12 +47,6 @@ services:
       - "${PAPERCLIP_PORT:-3100}"
     networks:
       - paperclip_net
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:${PAPERCLIP_PORT:-3100}/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
 
   # ── Nginx reverse proxy ────────────────────────────────────────────────────
   nginx:
@@ -68,8 +64,7 @@ services:
     networks:
       - paperclip_net
     depends_on:
-      paperclip:
-        condition: service_healthy
+      - paperclip
 
   # ── Certbot (Let's Encrypt) ────────────────────────────────────────────────
   # Chạy một lần để lấy cert, sau đó tự renew qua cron hoặc deploy timer.

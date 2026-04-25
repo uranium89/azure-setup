@@ -231,6 +231,11 @@ if [[ -z "${PAPERCLIP_SECRETS_MASTER_KEY:-}" ]]; then
     warn "Đã sinh PAPERCLIP_SECRETS_MASTER_KEY tự động."
 fi
 
+if [[ -z "${BETTER_AUTH_SECRET:-}" ]]; then
+    BETTER_AUTH_SECRET=$(openssl rand -hex 32)
+    warn "Đã sinh BETTER_AUTH_SECRET tự động."
+fi
+
 # ─────────────────────────────────────────────────────────────
 # 4. Tạo / cập nhật file .env
 # ─────────────────────────────────────────────────────────────
@@ -253,6 +258,8 @@ PAPERCLIP_INSTANCE_ID=production
 # ── Secrets ──────────────────────────────────────────────────
 PAPERCLIP_SECRETS_MASTER_KEY=${PAPERCLIP_SECRETS_MASTER_KEY}
 PAPERCLIP_SECRETS_STRICT_MODE=true
+BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+PAPERCLIP_AGENT_JWT_SECRET=${BETTER_AUTH_SECRET}
 
 # ── Telemetry ────────────────────────────────────────────────
 PAPERCLIP_TELEMETRY_DISABLED=1
