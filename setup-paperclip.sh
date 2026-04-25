@@ -117,7 +117,7 @@ info "Node.js: $(node --version)"
 # ─────────────────────────────────────────────────────────────
 if ! command -v pnpm &>/dev/null; then
     info "Cài pnpm..."
-    npm install -g pnpm@latest
+    sudo npm install -g pnpm@latest
 fi
 info "pnpm: $(pnpm --version)"
 
