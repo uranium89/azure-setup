@@ -123,24 +123,16 @@ sudo chmod 700 "$SCRIPT_DIR/data/instances/default/db"
 mkdir -p "$SCRIPT_DIR/nginx/conf.d"
 if [[ "${INSTALL_CERTBOT}" == "true" ]]; then
     info "Sử dụng cấu hình Nginx SSL (Certbot)..."
-    # Paperclip
+    # Paperclip & n8n (merged)
     cp "$SCRIPT_DIR/nginx/conf.d/paperclip.conf.template" "$SCRIPT_DIR/nginx/conf.d/paperclip.conf"
     sed -i "s/DOMAIN_PLACEHOLDER/${DOMAIN}/g" "$SCRIPT_DIR/nginx/conf.d/paperclip.conf"
     sed -i "s/PORT_PLACEHOLDER/3100/g" "$SCRIPT_DIR/nginx/conf.d/paperclip.conf"
-    
-    # n8n
-    cp "$SCRIPT_DIR/nginx/conf.d/n8n.conf.template" "$SCRIPT_DIR/nginx/conf.d/n8n.conf"
-    sed -i "s/DOMAIN_PLACEHOLDER/${DOMAIN}/g" "$SCRIPT_DIR/nginx/conf.d/n8n.conf"
 else
     info "Sử dụng cấu hình Nginx HTTP thường..."
-    # Paperclip
+    # Paperclip & n8n (merged)
     cp "$SCRIPT_DIR/nginx/conf.d/paperclip-http.conf.template" "$SCRIPT_DIR/nginx/conf.d/paperclip.conf"
     sed -i "s/IP_PLACEHOLDER/${DOMAIN}/g" "$SCRIPT_DIR/nginx/conf.d/paperclip.conf"
     sed -i "s/PORT_PLACEHOLDER/3100/g" "$SCRIPT_DIR/nginx/conf.d/paperclip.conf"
-
-    # n8n
-    cp "$SCRIPT_DIR/nginx/conf.d/n8n-http.conf.template" "$SCRIPT_DIR/nginx/conf.d/n8n.conf"
-    sed -i "s/IP_PLACEHOLDER/n8n.${DOMAIN}/g" "$SCRIPT_DIR/nginx/conf.d/n8n.conf"
 fi
 
 # ─────────────────────────────────────────────────────────────
@@ -158,7 +150,7 @@ echo -e "${GREEN}║          ✅  CÀI ĐẶT HOÀN TẤT!                     
 echo -e "${GREEN}╚══════════════════════════════════════════════════════╝${NC}\n"
 
 echo "  🌐 Paperclip: ${PAPERCLIP_PUBLIC_URL}"
-echo "  🌐 n8n:       ${PROTO}://n8n.${DOMAIN}"
+echo "  🌐 n8n:       ${PROTO}://${DOMAIN}/n8n/"
 echo "  📋 Log:       docker compose logs -f paperclip"
 echo "  🔁 Restart:   docker compose restart paperclip"
 echo ""

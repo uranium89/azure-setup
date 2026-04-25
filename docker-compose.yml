@@ -56,7 +56,8 @@ services:
       - N8N_PORT=5678
       - N8N_PROTOCOL=${N8N_PROTOCOL:-https}
       - NODE_ENV=production
-      - WEBHOOK_URL=${N8N_WEBHOOK_URL:-https://n8n.${DOMAIN}/}
+      - WEBHOOK_URL=${N8N_WEBHOOK_URL:-${PROTO}://${DOMAIN}/n8n/}
+      - N8N_PATH=/n8n/
       - GENERIC_TIMEZONE=Asia/Ho_Chi_Minh
     volumes:
       - ./n8n_data:/home/node/.n8n
