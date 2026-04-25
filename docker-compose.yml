@@ -34,14 +34,19 @@ services:
 
       # Telemetry
       PAPERCLIP_TELEMETRY_DISABLED: 1
-    command: >
-      sh -c "
-      mkdir -p /paperclip/instances/default/db && 
-      chmod 700 /paperclip/instances/default/db && 
-      cd /app && exec pnpm start
-      "
     volumes:
       - ./data:/paperclip
+    depends_on:
+      paperclip-init:
+        condition: service_completed_successfully
+
+  paperclip-init:
+    image: alpine
+    container_name: paperclip_init
+    user: root
+    volumes:
+      - ./data:/paperclip
+    command: chmod 700 /paperclip/instances/default/db
     expose:
       - "3100"
     networks:
