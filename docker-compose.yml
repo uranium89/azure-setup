@@ -40,7 +40,7 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     volumes:
-      - paperclip_data:/paperclip-data
+      - ./data:/paperclip-data
     expose:
       - "${PAPERCLIP_PORT:-3100}"
     networks:
@@ -85,8 +85,6 @@ services:
       - paperclip_net
 
 volumes:
-  paperclip_data:
-    driver: local
   certbot_webroot:
     driver: local
   certbot_certs:

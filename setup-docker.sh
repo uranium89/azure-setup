@@ -271,7 +271,15 @@ chmod 600 "$ENV_FILE"
 info ".env đã được ghi."
 
 # ─────────────────────────────────────────────────────────────
-# 5. Tạo Nginx config
+# 5. Khởi tạo thư mục Data và quyền truy cập
+# ─────────────────────────────────────────────────────────────
+info "Khởi tạo thư mục data và cấp quyền..."
+mkdir -p "$SCRIPT_DIR/data"
+# Cấp quyền ghi cho mọi user để container chắc chắn ghi được
+chmod -R 777 "$SCRIPT_DIR/data"
+
+# ─────────────────────────────────────────────────────────────
+# 6. Tạo Nginx config
 # ─────────────────────────────────────────────────────────────
 info "Tạo Nginx config..."
 mkdir -p "$SCRIPT_DIR/nginx/conf.d"
