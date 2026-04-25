@@ -63,11 +63,19 @@ confirm() {
 ENV_FILE="$SCRIPT_DIR/.env"
 NON_INTERACTIVE=false
 
-# Nếu .env đã tồn tại → load vào shell
+# Nếu .env đã tồn tại → load vào shell (chỉ load những biến chưa được set)
 if [[ -f "$ENV_FILE" ]]; then
-    # shellcheck disable=SC1090
-    source <(grep -v '^#' "$ENV_FILE" | grep '=')
-    info ".env đã tồn tại và được load."
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        if [[ ! "$line" =~ ^# ]] && [[ "$line" == *"="* ]]; then
+            key=$(echo "$line" | cut -d'=' -f1)
+            value=$(echo "$line" | cut -d'=' -f2-)
+            # Chỉ set nếu biến chưa tồn tại trong môi trường
+            if [[ -z "${!key:-}" ]]; then
+                export "$key"="$value"
+            fi
+        fi
+    done < "$ENV_FILE"
+    info ".env đã được load (ưu tiên biến môi trường hiện tại)."
     NON_INTERACTIVE=true
 fi
 
@@ -285,8 +293,8 @@ mkdir -p "$SCRIPT_DIR/data"
 mkdir -p "$SCRIPT_DIR/nginx/certbot/www"
 mkdir -p "$SCRIPT_DIR/nginx/certbot/conf"
 # Cấp quyền ghi cho mọi user để container chắc chắn ghi được
-chmod -R 777 "$SCRIPT_DIR/data"
-chmod -R 777 "$SCRIPT_DIR/nginx/certbot"
+sudo chmod -R 777 "$SCRIPT_DIR/data"
+sudo chmod -R 777 "$SCRIPT_DIR/nginx/certbot"
 
 # ─────────────────────────────────────────────────────────────
 # 6. Tạo Nginx config
