@@ -27,6 +27,10 @@ services:
       HOME: /paperclip-data
       PAPERCLIP_HOME: /paperclip-data
       PAPERCLIP_INSTANCE_ID: ${PAPERCLIP_INSTANCE_ID:-default}
+      
+      # Kích hoạt OpenCode Agent và ép đường dẫn PATH
+      PAPERCLIP_AGENT_OPENCODE_ENABLED: "true"
+      PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/app/cli/bin
 
       # Secrets
       PAPERCLIP_SECRETS_MASTER_KEY: ${PAPERCLIP_SECRETS_MASTER_KEY}
