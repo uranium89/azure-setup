@@ -24,8 +24,8 @@ services:
       PAPERCLIP_PUBLIC_URL: ${PAPERCLIP_PUBLIC_URL}
 
       # Data storage (inside container – mapped via volume)
-      HOME: /app
-      PAPERCLIP_HOME: /paperclip-data
+      HOME: /paperclip
+      PAPERCLIP_HOME: /paperclip
       PAPERCLIP_INSTANCE_ID: ${PAPERCLIP_INSTANCE_ID:-default}
       
       # Kích hoạt OpenCode Agent và ép đường dẫn PATH
@@ -48,7 +48,7 @@ services:
       GOOGLE_GENERATIVE_AI_API_KEY: ${GOOGLE_GENERATIVE_AI_API_KEY:-}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
     volumes:
-      - ./data:/paperclip-data
+      - ./data:/paperclip
     expose:
       - "${PAPERCLIP_PORT:-3100}"
     networks:
