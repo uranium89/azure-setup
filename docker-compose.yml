@@ -34,6 +34,12 @@ services:
 
       # Telemetry
       PAPERCLIP_TELEMETRY_DISABLED: 1
+    command: >
+      sh -c "
+      mkdir -p /paperclip/instances/default/db && 
+      chmod 700 /paperclip/instances/default/db && 
+      exec pnpm start
+      "
     volumes:
       - ./data:/paperclip
     expose:
