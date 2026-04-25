@@ -282,8 +282,11 @@ info ".env đã được ghi."
 # ─────────────────────────────────────────────────────────────
 info "Khởi tạo thư mục data và cấp quyền..."
 mkdir -p "$SCRIPT_DIR/data"
+mkdir -p "$SCRIPT_DIR/nginx/certbot/www"
+mkdir -p "$SCRIPT_DIR/nginx/certbot/conf"
 # Cấp quyền ghi cho mọi user để container chắc chắn ghi được
 chmod -R 777 "$SCRIPT_DIR/data"
+chmod -R 777 "$SCRIPT_DIR/nginx/certbot"
 
 # ─────────────────────────────────────────────────────────────
 # 6. Tạo Nginx config

@@ -73,17 +73,11 @@ services:
     image: certbot/certbot:latest
     container_name: paperclip_certbot
     volumes:
-      - certbot_webroot:/var/www/certbot
-      - certbot_certs:/etc/letsencrypt
+      - ./nginx/certbot/www:/var/www/certbot
+      - ./nginx/certbot/conf:/etc/letsencrypt
     entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done"
     networks:
       - paperclip_net
-
-volumes:
-  certbot_webroot:
-    driver: local
-  certbot_certs:
-    driver: local
 
 networks:
   paperclip_net:
