@@ -39,6 +39,13 @@ services:
     depends_on:
       paperclip-init:
         condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3100/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paperclip_net
 
   paperclip-init:
     image: alpine
@@ -47,8 +54,6 @@ services:
     volumes:
       - ./data:/paperclip
     command: chmod 700 /paperclip/instances/default/db
-    expose:
-      - "3100"
     networks:
       - paperclip_net
 
@@ -64,7 +69,8 @@ services:
       - ./nginx/certbot/www:/var/www/certbot:ro
       - ./nginx/certbot/conf:/etc/letsencrypt:ro
     depends_on:
-      - paperclip
+      paperclip:
+        condition: service_healthy
     networks:
       - paperclip_net
 
