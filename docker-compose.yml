@@ -30,6 +30,7 @@ services:
       
       # Kích hoạt OpenCode Agent và ép đường dẫn PATH
       PAPERCLIP_AGENT_OPENCODE_ENABLED: "true"
+      PAPERCLIP_AGENT_OPENCODE_BINARY: /usr/local/bin/opencode
       PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/app/cli/bin
 
       # Secrets
@@ -41,9 +42,11 @@ services:
       # Telemetry
       PAPERCLIP_TELEMETRY_DISABLED: ${PAPERCLIP_TELEMETRY_DISABLED:-1}
 
-      # LLM API keys (cho claude/codex adapters nếu dùng)
+      # LLM API Keys
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GOOGLE_GENERATIVE_AI_API_KEY: ${GOOGLE_GENERATIVE_AI_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
     volumes:
       - ./data:/paperclip-data
     expose:
