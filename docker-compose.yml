@@ -38,7 +38,7 @@ services:
       sh -c "
       mkdir -p /paperclip/instances/default/db && 
       chmod 700 /paperclip/instances/default/db && 
-      exec pnpm start
+      cd /app && exec pnpm start
       "
     volumes:
       - ./data:/paperclip
