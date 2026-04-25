@@ -240,6 +240,7 @@ PROTO="http"
 info "Ghi file .env..."
 cat > "$ENV_FILE" <<ENVEOF
 # ── Server ───────────────────────────────────────────────────
+HOST=0.0.0.0
 PAPERCLIP_PORT=${PORT}
 
 # ── Deployment Mode ──────────────────────────────────────────
