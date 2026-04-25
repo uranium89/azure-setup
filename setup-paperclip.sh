@@ -13,7 +13,7 @@ set -euo pipefail
 # ─────────────────────────────────────────────────────────────
 # 0. Cấu hình – Sửa các biến này trước khi chạy
 # ─────────────────────────────────────────────────────────────
-DOMAIN=""                   # VD: paperclip.example.com  (bắt buộc cho public mode)
+DOMAIN="http://52.188.18.250"                   # VD: paperclip.example.com  (bắt buộc cho public mode)
 PORT="3100"                 # Port mà Paperclip lắng nghe
 PAPERCLIP_HOME="/opt/paperclip-data"
 PAPERCLIP_USER="paperclip"  # System user chạy service
