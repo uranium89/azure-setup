@@ -31,21 +31,36 @@ fi
 # ─────────────────────────────────────────────────────────────
 # 2. Thu thập thông tin cấu hình
 # ─────────────────────────────────────────────────────────────
-# Ưu tiên lấy từ biến môi trường, nếu không có mới hỏi hoặc dùng mặc định
+# Load existing .env if it exists to preserve secrets
+if [ -f "$SCRIPT_DIR/.env" ]; then
+    info "Phát hiện file .env cũ, đang tải cấu hình..."
+    # Đọc file .env nhưng không export để tránh lỗi với các ký tự đặc biệt
+    DOMAIN_EXISTING=$(grep '^DOMAIN=' "$SCRIPT_DIR/.env" | cut -d'=' -f2)
+    INSTALL_CERTBOT_EXISTING=$(grep '^INSTALL_CERTBOT=' "$SCRIPT_DIR/.env" | cut -d'=' -f2)
+    MASTER_KEY_EXISTING=$(grep '^PAPERCLIP_SECRETS_MASTER_KEY=' "$SCRIPT_DIR/.env" | cut -d'=' -f2)
+    BETTER_AUTH_EXISTING=$(grep '^BETTER_AUTH_SECRET=' "$SCRIPT_DIR/.env" | cut -d'=' -f2)
+    JWT_SECRET_EXISTING=$(grep '^PAPERCLIP_AGENT_JWT_SECRET=' "$SCRIPT_DIR/.env" | cut -d'=' -f2)
+    INSTANCE_ID_EXISTING=$(grep '^PAPERCLIP_INSTANCE_ID=' "$SCRIPT_DIR/.env" | cut -d'=' -f2)
+fi
+
+# Ưu tiên lấy từ biến môi trường, sau đó đến file .env cũ, nếu không có mới hỏi
+DOMAIN=${DOMAIN:-${DOMAIN_EXISTING}}
 [[ -z "${DOMAIN}" ]] && read -p "Nhập domain của bạn (ví dụ: vinhpham.eastus.cloudapp.azure.com): " DOMAIN
+
+INSTALL_CERTBOT=${INSTALL_CERTBOT:-${INSTALL_CERTBOT_EXISTING}}
 [[ -z "${INSTALL_CERTBOT}" ]] && read -p "Bạn có muốn cài đặt SSL Certbot không? (true/false): " INSTALL_CERTBOT
 
-# Tự động tạo các Secret nếu chưa có
-PAPERCLIP_SECRETS_MASTER_KEY=$(openssl rand -hex 32)
-BETTER_AUTH_SECRET=$(openssl rand -hex 32)
-PAPERCLIP_AGENT_JWT_SECRET=$(openssl rand -hex 32)
+# Bảo tồn Secret cũ hoặc tạo mới
+PAPERCLIP_SECRETS_MASTER_KEY=${MASTER_KEY_EXISTING:-$(openssl rand -hex 32)}
+BETTER_AUTH_SECRET=${BETTER_AUTH_EXISTING:-$(openssl rand -hex 32)}
+PAPERCLIP_AGENT_JWT_SECRET=${JWT_SECRET_EXISTING:-$(openssl rand -hex 32)}
 
 PROTO="http"
 [[ "${INSTALL_CERTBOT}" == "true" ]] && PROTO="https"
 PAPERCLIP_PUBLIC_URL=${PROTO}://${DOMAIN}
 
 # ── Instance ─────────────────────────────────────────────────
-PAPERCLIP_INSTANCE_ID=default
+PAPERCLIP_INSTANCE_ID=${INSTANCE_ID_EXISTING:-default}
 
 # ─────────────────────────────────────────────────────────────
 # 3. Kiểm tra Docker & Compose
@@ -160,3 +175,7 @@ echo ""
 echo -e "${RED}⚠  LƯU LẠI MASTER KEY (Cần để khôi phục dữ liệu):${NC}"
 echo "   PAPERCLIP_SECRETS_MASTER_KEY=${PAPERCLIP_SECRETS_MASTER_KEY}"
 echo ""
+
+if [[ -n "${MASTER_KEY_EXISTING}" ]]; then
+    warn "Lưu ý: Bạn đang sử dụng Master Key cũ từ file .env. Không cần thay đổi gì thêm."
+fi
