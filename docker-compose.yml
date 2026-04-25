@@ -14,6 +14,7 @@ services:
   paperclip:
     image: ghcr.io/paperclipai/paperclip:latest
     container_name: paperclip
+    user: root
     restart: unless-stopped
     environment:
       HOST: 0.0.0.0
