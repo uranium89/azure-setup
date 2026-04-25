@@ -59,8 +59,8 @@ services:
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
-      - certbot_webroot:/var/www/certbot:ro
-      - certbot_certs:/etc/letsencrypt:ro
+      - ./nginx/certbot/www:/var/www/certbot:ro
+      - ./nginx/certbot/conf:/etc/letsencrypt:ro
     networks:
       - paperclip_net
     depends_on:
