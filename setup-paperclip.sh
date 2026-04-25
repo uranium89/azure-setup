@@ -270,68 +270,30 @@ sudo systemctl daemon-reload
 sudo systemctl enable paperclip
 
 # ─────────────────────────────────────────────────────────────
-# 11. Nginx reverse proxy
+# 11. Nginx reverse proxy (luôn dùng HTTP config trước)
 # ─────────────────────────────────────────────────────────────
 if [[ "$INSTALL_NGINX" == "true" ]]; then
     info "Cài và cấu hình Nginx..."
     sudo apt-get install -y nginx
-    sudo ln -sf /etc/nginx/sites-available/paperclip /etc/nginx/sites-enabled/paperclip
-    sudo rm -f /etc/nginx/sites-enabled/default
-fi
 
-# ─────────────────────────────────────────────────────────────
-# 12. Let's Encrypt SSL + Nginx config
-# ─────────────────────────────────────────────────────────────
-if [[ "$INSTALL_CERTBOT" == "true" ]]; then
-    info "Cài Let's Encrypt SSL cho ${DOMAIN}..."
-    sudo apt-get install -y certbot python3-certbot-nginx
-
-    # Lấy cert trước khi viết Nginx HTTPS config
-    sudo systemctl stop nginx 2>/dev/null || true
-    sudo certbot certonly \
-        --standalone \
-        --non-interactive \
-        --agree-tos \
-        --email "$ADMIN_EMAIL" \
-        -d "$DOMAIN"
-
-    # Cert đã có → viết HTTPS config
-    sudo tee /etc/nginx/sites-available/paperclip > /dev/null << NGINXHTTPS
+    # Bước 1: viết HTTP config thuần – để Nginx chạy và certbot có thể verify
+    sudo tee /etc/nginx/sites-available/paperclip > /dev/null << 'NGINXBASE'
 upstream paperclip_backend {
-    server 127.0.0.1:${PORT};
+    server 127.0.0.1:PAPERCLIP_PORT_PLACEHOLDER;
     keepalive 32;
 }
-
 server {
     listen 80;
     listen [::]:80;
-    server_name ${DOMAIN};
-    return 301 https://\$host\$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-    server_name ${DOMAIN};
-
-    ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
-    include             /etc/letsencrypt/options-ssl-nginx.conf;
-    ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
-
-    add_header X-Frame-Options DENY;
-    add_header X-Content-Type-Options nosniff;
-    add_header X-XSS-Protection "1; mode=block";
-    add_header Referrer-Policy "strict-origin-when-cross-origin";
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    server_name PAPERCLIP_DOMAIN_PLACEHOLDER;
 
     proxy_http_version 1.1;
-    proxy_set_header Upgrade \$http_upgrade;
+    proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
-    proxy_set_header Host \$host;
-    proxy_set_header X-Real-IP \$remote_addr;
-    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto \$scheme;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
     proxy_read_timeout 300s;
     proxy_connect_timeout 10s;
     client_max_body_size 100M;
@@ -340,11 +302,37 @@ server {
         proxy_pass http://paperclip_backend;
     }
 }
-NGINXHTTPS
+NGINXBASE
 
+    # Thế placeholder bằng giá trị thực
+    sudo sed -i "s/PAPERCLIP_PORT_PLACEHOLDER/${PORT}/g" /etc/nginx/sites-available/paperclip
+    sudo sed -i "s/PAPERCLIP_DOMAIN_PLACEHOLDER/${DOMAIN}/g" /etc/nginx/sites-available/paperclip
+
+    sudo ln -sf /etc/nginx/sites-available/paperclip /etc/nginx/sites-enabled/paperclip
+    sudo rm -f /etc/nginx/sites-enabled/default
     sudo nginx -t
-    sudo systemctl start nginx
     sudo systemctl enable nginx
+    sudo systemctl restart nginx
+fi
+
+# ─────────────────────────────────────────────────────────────
+# 12. Let's Encrypt SSL (dùng certbot --nginx plugin)
+# ─────────────────────────────────────────────────────────────
+if [[ "$INSTALL_CERTBOT" == "true" ]]; then
+    info "Cài Let's Encrypt SSL cho ${DOMAIN}..."
+    sudo apt-get install -y certbot python3-certbot-nginx
+
+    # certbot --nginx:
+    #   1. Lấy/renew cert từ Let's Encrypt
+    #   2. Tự sửa Nginx config thêm HTTPS block
+    #   3. Tự tạo /etc/letsencrypt/options-ssl-nginx.conf và ssl-dhparams.pem
+    #   4. Reload Nginx
+    sudo certbot --nginx \
+        --non-interactive \
+        --agree-tos \
+        --email "$ADMIN_EMAIL" \
+        --redirect \
+        -d "$DOMAIN"
 
     # Auto-renew
     (crontab -l 2>/dev/null; echo "0 3 * * * certbot renew --quiet --nginx") | \
