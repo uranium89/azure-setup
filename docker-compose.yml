@@ -51,13 +51,14 @@ services:
     image: n8nio/n8n:latest
     container_name: n8n
     restart: always
+    ports:
+      - "5678:5678"
     environment:
       - N8N_HOST=${DOMAIN}
       - N8N_PORT=5678
-      - N8N_PROTOCOL=${N8N_PROTOCOL:-https}
+      - N8N_PROTOCOL=${PROTO}
       - NODE_ENV=production
-      - WEBHOOK_URL=${N8N_WEBHOOK_URL:-${PROTO}://${DOMAIN}/n8n/}
-      - N8N_PATH=/n8n/
+      - WEBHOOK_URL=${PROTO}://${DOMAIN}:5678/
       - GENERIC_TIMEZONE=Asia/Ho_Chi_Minh
     volumes:
       - ./n8n_data:/home/node/.n8n

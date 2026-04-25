@@ -150,7 +150,7 @@ echo -e "${GREEN}║          ✅  CÀI ĐẶT HOÀN TẤT!                     
 echo -e "${GREEN}╚══════════════════════════════════════════════════════╝${NC}\n"
 
 echo "  🌐 Paperclip: ${PAPERCLIP_PUBLIC_URL}"
-echo "  🌐 n8n:       ${PROTO}://${DOMAIN}/n8n/"
+echo "  🌐 n8n:       ${PROTO}://${DOMAIN}:5678"
 echo "  📋 Log:       docker compose logs -f paperclip"
 echo "  🔁 Restart:   docker compose restart paperclip"
 echo ""
