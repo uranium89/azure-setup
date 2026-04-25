@@ -25,7 +25,7 @@ services:
 
       # Data storage (inside container – mapped via volume)
       PAPERCLIP_HOME: /paperclip-data
-      PAPERCLIP_INSTANCE_ID: ${PAPERCLIP_INSTANCE_ID:-production}
+      PAPERCLIP_INSTANCE_ID: ${PAPERCLIP_INSTANCE_ID:-default}
 
       # Secrets
       PAPERCLIP_SECRETS_MASTER_KEY: ${PAPERCLIP_SECRETS_MASTER_KEY}

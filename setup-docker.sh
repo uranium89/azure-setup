@@ -261,7 +261,7 @@ PAPERCLIP_DEPLOYMENT_MODE=authenticated
 PAPERCLIP_PUBLIC_URL=${PROTO}://${DOMAIN}
 
 # ── Instance ─────────────────────────────────────────────────
-PAPERCLIP_INSTANCE_ID=production
+PAPERCLIP_INSTANCE_ID=default
 
 # ── Secrets ──────────────────────────────────────────────────
 PAPERCLIP_SECRETS_MASTER_KEY=${PAPERCLIP_SECRETS_MASTER_KEY}
@@ -289,7 +289,7 @@ info ".env đã được ghi."
 # 5. Khởi tạo thư mục Data và quyền truy cập
 # ─────────────────────────────────────────────────────────────
 info "Khởi tạo thư mục data và cấp quyền..."
-mkdir -p "$SCRIPT_DIR/data/instances/production/db"
+mkdir -p "$SCRIPT_DIR/data/instances/default/db"
 mkdir -p "$SCRIPT_DIR/nginx/certbot/www"
 mkdir -p "$SCRIPT_DIR/nginx/certbot/conf"
 
@@ -299,7 +299,7 @@ sudo chmod -R 777 "$SCRIPT_DIR/nginx/certbot"
 
 # ĐẶC BIỆT: PostgreSQL yêu cầu thư mục db phải là 700
 info "Thiết lập quyền 700 cho thư mục database..."
-sudo chmod 700 "$SCRIPT_DIR/data/instances/production/db"
+sudo chmod 700 "$SCRIPT_DIR/data/instances/default/db"
 
 # ─────────────────────────────────────────────────────────────
 # 6. Tạo Nginx config
@@ -424,10 +424,13 @@ echo "  🔁 Restart: docker compose restart paperclip"
 echo "  🔄 Update:  docker compose pull && docker compose up -d"
 echo ""
 echo -e "${YELLOW}BƯỚC TIẾP THEO:${NC}"
-echo "  1. Mở ${PROTO}://${DOMAIN} → Claim Board Admin"
-echo "  2. Vào Settings → Agents → New Agent → Adapter: opencode_local"
-echo "  3. (Tuỳ chọn) Đăng nhập OpenCode:"
-echo "     docker compose exec paperclip opencode auth login"
+echo "  1. Mở ${PROTO}://${DOMAIN} → Claim Board Admin
+  2. Tạo link đăng ký Admin (CEO) bằng lệnh:
+     docker compose exec paperclip pnpm paperclipai auth bootstrap-ceo
+  3. Vào Settings → Agents → New Agent → Adapter: opencode_local
+  4. (Tuỳ chọn) Đăng nhập OpenCode:
+     docker compose exec paperclip opencode auth login
+"
 echo ""
 echo -e "${RED}⚠  LƯU LẠI KEY NÀY (cần để restore):${NC}"
 echo "   PAPERCLIP_SECRETS_MASTER_KEY=${PAPERCLIP_SECRETS_MASTER_KEY}"
